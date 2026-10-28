@@ -68,7 +68,7 @@ class GeneticAlgorithm:
 						sons1, distances, max_passes=50
 					)
 
-				if random.random() < 0.1:
+				if random.random() < local_search_probability:
 					sons2 = LocalSearch.two_opt(
 						sons2, distances, max_passes=50
 					)
