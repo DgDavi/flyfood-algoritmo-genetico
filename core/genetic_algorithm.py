@@ -15,9 +15,9 @@ from .parameters import (
 
 class GeneticAlgorithm:
 	def __init__(self) -> None:
-		self.fitness = 0
-		self.best_cost = 0
-		self.best_route = []
+		self.fitness : list[int] = []
+		self.best_cost : int = 0
+		self.best_route : list[int] = []
 
 	def initialize_population(self):
 		import random
@@ -114,21 +114,27 @@ class GeneticAlgorithm:
 			
 			if min(self.fitness) < self.best_cost:
 				best_index = self.fitness.index(min(self.fitness))
-
-				self.best_cost = self.fitness[best_index]
 				self.best_route = population[best_index][:]
-			
-			if generation % 1 == 0:
-				best = min(self.fitness)
-				average = sum(self.fitness) / len(self.fitness)
-				diversity = len({tuple(individual) for individual in population})
+				self.best_cost = self.fitness[best_index]
 
-				print(
-					f"Generation {generation:4d} | "
-					f"best: {best} | "
-					f"historical best: {self.best_cost} | "
-					f"average: {average:.1f} | "
-					f"distinct routes: {diversity}/{len(population)}"
-				)
-				
+			self.print_progress(fitness=self.fitness, best_cost=self.best_cost, generation=generation, population=population)
+
 		return self.best_cost, self.best_route
+
+	@staticmethod
+	def print_progress(fitness, best_cost, generation, population):
+		
+		if generation % 1 == 0:
+			best = min(fitness)
+			average = sum(fitness) / len(fitness)
+			diversity = len({tuple(individual) for individual in population})
+
+			print(
+				f"Generation {generation:4d} | "
+				f"best: {best} | "
+				f"historical best: {best_cost} | "
+				f"average: {average:.1f} | "
+				f"distinct routes: {diversity}/{len(population)}"
+			)
+			
+	

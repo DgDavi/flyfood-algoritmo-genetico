@@ -6,7 +6,6 @@ from .parameters import (
     NUMBER_OF_CITIES,
     NUMBER_OF_GENERATIONS,
     POPULATION_SIZE,
-    SHUFFLE_PROBABILITY,
     TOURNAMENT_SIZE,
 )
 
@@ -29,7 +28,6 @@ __all__ = [
     "NUMBER_OF_CITIES",
     "NUMBER_OF_GENERATIONS",
     "POPULATION_SIZE",
-    "SHUFFLE_PROBABILITY",
     "TOURNAMENT_SIZE",
     "GeneticAlgorithm",
 ]
