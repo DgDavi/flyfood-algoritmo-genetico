@@ -24,9 +24,9 @@ Ela funciona como o núcleo do projeto. Os outros módulos fornecem operações 
 
 ```python
 def __init__(self) -> None:
-    self.fitness = 0
-    self.best_cost = 0
-    self.best_route = []
+    self.fitness: list[int] = []
+    self.best_cost: int = 0
+    self.best_route: list[int] = []
 ```
 
 Esses atributos armazenam o estado do algoritmo:
@@ -118,7 +118,7 @@ for generation in range(NUMBER_OF_GENERATIONS):
 No projeto:
 
 ```python
-NUMBER_OF_GENERATIONS = 200
+NUMBER_OF_GENERATIONS = 20
 ```
 
 Cada geração tenta produzir uma população melhor que a anterior.
@@ -181,34 +181,33 @@ Cada descendente pode sofrer mutação:
 
 ```python
 if random.random() < MUTATION_PROBABILITY:
-    tools.mutShuffleIndexes(
-        sons1,
-        indpb=SHUFFLE_PROBABILITY
-    )
+    tools.mutInversion(sons1)
 ```
 
-A mutação embaralha algumas posições da rota.
+A mutação aplicada é a **inversão**: um trecho da rota é escolhido e seus
+elementos são invertidos. Como a operação apenas altera a ordem das cidades,
+o resultado continua sendo uma permutação válida.
 
 As configurações são:
 
 ```python
 MUTATION_PROBABILITY = 0.2
-SHUFFLE_PROBABILITY = 0.05
 ```
 
-Isso significa:
-
-- Existe 20% de chance de um descendente sofrer mutação.
-- Cada posição possui 5% de chance de ser embaralhada durante a mutação.
-
-A mutação adiciona diversidade à população e ajuda o algoritmo a explorar novas possibilidades.
+Cada descendente tem 20% de chance de sofrer uma inversão. A mutação adiciona
+diversidade à população e ajuda o algoritmo a explorar novas possibilidades.
 
 ## 8. Busca local com `2-opt`
 
-Depois do cruzamento e da mutação, existe uma chance de aplicar uma melhoria local:
+Depois do cruzamento e da mutação, existe uma probabilidade progressiva de
+aplicar uma melhoria local:
 
 ```python
-if random.random() < 0.1:
+local_search_probability = 0.5 + 0.15 * (
+    generation / NUMBER_OF_GENERATIONS
+)
+
+if random.random() < local_search_probability:
     sons1 = LocalSearch.two_opt(
         sons1,
         distances,
@@ -216,7 +215,9 @@ if random.random() < 0.1:
     )
 ```
 
-Essa operação tem 10% de chance de ser aplicada a cada descendente.
+A mesma verificação é feita para `sons2`. A probabilidade começa em 50% e
+aumenta conforme as gerações avançam. Com os parâmetros atuais, ela varia de
+50% na primeira geração até aproximadamente 64,25% na última.
 
 O algoritmo `2-opt` tenta melhorar uma rota invertendo trechos dela. Ele compara:
 
@@ -281,7 +282,8 @@ if len(new_population) >= int(POPULATION_SIZE * 0.2):
     break
 ```
 
-Como `POPULATION_SIZE` é 200, aproximadamente 20% da nova população é formada pelas melhores rotas diferentes.
+Como `POPULATION_SIZE` é 200, 40 indivíduos (20% da população) são
+reservados para a melhor rota e para as melhores rotas distintas.
 
 Essa estratégia evita que a população fique composta apenas por cópias da mesma rota.
 
@@ -319,10 +321,10 @@ Essa variável histórica é importante porque uma geração posterior pode ter 
 
 ## 13. Exibição do progresso
 
-A cada 20 gerações, o algoritmo imprime informações:
+A cada geração, o algoritmo imprime informações:
 
 ```python
-if generation % 20 == 0:
+if generation % 1 == 0:
 ```
 
 Ele exibe:
@@ -336,7 +338,7 @@ Ele exibe:
 Exemplo:
 
 ```text
-Generation   20 | best: 9500 | historical best: 9300 |
+Generation   19 | best: 9500 | historical best: 9300 |
 average: 11200.4 | distinct routes: 174/200
 ```
 
@@ -344,7 +346,7 @@ Isso permite acompanhar a evolução da solução e medir a diversidade da popul
 
 ## 14. Resultado final
 
-Ao terminar as 200 gerações, o método retorna:
+Ao terminar as 20 gerações configuradas, o método retorna:
 
 ```python
 return self.best_cost, self.best_route
