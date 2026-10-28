@@ -44,32 +44,35 @@ class GeneticAlgorithm:
 			new_population = []
 
 			while len(new_population) < POPULATION_SIZE:
-				parent1 = Tournament.play(population, self.fitness)[:]
-				parent2 = Tournament.play(population, self.fitness)[:]
+				parents1 = Tournament.play(population, self.fitness)[:]
+				parents2 = Tournament.play(population, self.fitness)[:]
 
+				sons1 = []
+				sons2 = []
+				
 				if random.random() < CROSSOVER_PROBABILITY:
-					parent1, parent2 = Crossing.play(parent1=parent1, parent2=parent2)
+					sons1, sons2 = Crossing.play(parent1=parents1, parent2=parents2)
 
 				if random.random() < MUTATION_PROBABILITY:
-					tools.mutShuffleIndexes(parent1, indpb=SHUFFLE_PROBABILITY)
+					tools.mutShuffleIndexes(sons1, indpb=SHUFFLE_PROBABILITY)
 
 				if random.random() < MUTATION_PROBABILITY:
-					tools.mutShuffleIndexes(parent2, indpb=SHUFFLE_PROBABILITY)
+					tools.mutShuffleIndexes(sons2, indpb=SHUFFLE_PROBABILITY)
 
 
 				if random.random() < 0.1:
-					parent1 = LocalSearch.two_opt(
-						parent1, distances, max_passes=50
+					sons1 = LocalSearch.two_opt(
+						sons1, distances, max_passes=50
 					)
 
 				if random.random() < 0.1:
-					parent2 = LocalSearch.two_opt(
-						parent2, distances, max_passes=50
+					sons2 = LocalSearch.two_opt(
+						sons2, distances, max_passes=50
 					)
 
-				new_population.append(parent1)
+				new_population.append(sons1)
 				if len(new_population) < POPULATION_SIZE:
-					new_population.append(parent2)
+					new_population.append(sons2)
 
 
 			population = population + new_population
@@ -112,7 +115,7 @@ class GeneticAlgorithm:
 				self.best_cost = self.fitness[best_index]
 				self.best_route = population[best_index][:]
 			
-			if generation % 20 == 0:
+			if generation % 1 == 0:
 				best = min(self.fitness)
 				average = sum(self.fitness) / len(self.fitness)
 				diversity = len({tuple(individual) for individual in population})
