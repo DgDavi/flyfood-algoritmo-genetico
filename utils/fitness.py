@@ -3,10 +3,10 @@ from utils import CostPath
 
 class Fitness:
     @staticmethod
-    def calculate(populacao, dicDistancias):
-        listaAptidao = []
+    def calculate(population, distances):
+        fitness_values = []
        
-        for elem in populacao:
-            listaAptidao.append(CostPath.calculate(elem, dicDistancias))
+        for individual in population:
+            fitness_values.append(CostPath.calculate(individual, distances))
        
-        return listaAptidao
+        return fitness_values

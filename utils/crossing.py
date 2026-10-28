@@ -3,13 +3,13 @@ from deap import tools
 
 class Crossing:
     @staticmethod
-    def play(pai1, pai2):
-        filho1 = [cidade - 1 for cidade in pai1]
-        filho2 = [cidade - 1 for cidade in pai2]
+    def play(parent1, parent2):
+        child1 = [city - 1 for city in parent1]
+        child2 = [city - 1 for city in parent2]
 
-        tools.cxOrdered(filho1, filho2)
+        tools.cxOrdered(child1, child2)
         
-        filho1 = [cidade + 1 for cidade in filho1]
-        filho2 = [cidade + 1 for cidade in filho2]
+        child1 = [city + 1 for city in child1]
+        child2 = [city + 1 for city in child2]
 
-        return filho1, filho2
+        return child1, child2

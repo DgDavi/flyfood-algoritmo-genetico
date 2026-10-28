@@ -5,124 +5,124 @@ from deap import tools
 from utils import Crossing, Fitness, LocalSearch, Tournament
 
 from .parameters import (
-	PROBABILIDADE_DE_CRUZAMENTO,
-	PROBABILIDADE_DE_EMBARALHAR,
-	PROBABILIDADE_DE_MUTACAO,
-	QUANTIDADE_DE_CIDADES,
-	QUANTIDADE_DE_GERACOES_EXECUTADAS,
-	TAMANHO_DA_POPULACAO,
+	CROSSOVER_PROBABILITY,
+	MUTATION_PROBABILITY,
+	NUMBER_OF_CITIES,
+	NUMBER_OF_GENERATIONS,
+	POPULATION_SIZE,
+	SHUFFLE_PROBABILITY,
 )
 
 
 class GeneticAlgorithm:
 	def __init__(self) -> None:
-		self.aptidao = 0
-		self.melhor_custo = 0
-		self.melhor_rota = []
+		self.fitness = 0
+		self.best_cost = 0
+		self.best_route = []
 
-	def initPopulation(self):
+	def initialize_population(self):
 		import random
 
-		lista = []
+		population = []
 
-		for _ in range(TAMANHO_DA_POPULACAO):
-			individuo = list(range(1, QUANTIDADE_DE_CIDADES+1))
-			random.shuffle(individuo)
-			lista.append(individuo)
+		for _ in range(POPULATION_SIZE):
+			individual = list(range(1, NUMBER_OF_CITIES + 1))
+			random.shuffle(individual)
+			population.append(individual)
 
-		return lista
+		return population
 
-	def simulate(self, populacao, distancias):
-		self.aptidao = Fitness.calculate(populacao, distancias)
+	def simulate(self, population, distances):
+		self.fitness = Fitness.calculate(population, distances)
 
-		indice_melhor = self.aptidao.index(min(self.aptidao))
+		best_index = self.fitness.index(min(self.fitness))
 
-		self.melhor_custo = self.aptidao[indice_melhor]
-		self.melhor_rota = populacao[indice_melhor][:]
+		self.best_cost = self.fitness[best_index]
+		self.best_route = population[best_index][:]
 
-		for geracao in range(QUANTIDADE_DE_GERACOES_EXECUTADAS):
-			novaPop = []
+		for generation in range(NUMBER_OF_GENERATIONS):
+			new_population = []
 
-			while len(novaPop) < TAMANHO_DA_POPULACAO:
-				pai1 = Tournament.play(populacao, self.aptidao)[:]
-				pai2 = Tournament.play(populacao, self.aptidao)[:]
+			while len(new_population) < POPULATION_SIZE:
+				parent1 = Tournament.play(population, self.fitness)[:]
+				parent2 = Tournament.play(population, self.fitness)[:]
 
-				if random.random() < PROBABILIDADE_DE_CRUZAMENTO:
-					pai1, pai2 = Crossing.play(pai1=pai1, pai2=pai2)
+				if random.random() < CROSSOVER_PROBABILITY:
+					parent1, parent2 = Crossing.play(parent1=parent1, parent2=parent2)
 
-				if random.random() < PROBABILIDADE_DE_MUTACAO:
-					tools.mutShuffleIndexes(pai1, indpb=PROBABILIDADE_DE_EMBARALHAR)                      
+				if random.random() < MUTATION_PROBABILITY:
+					tools.mutShuffleIndexes(parent1, indpb=SHUFFLE_PROBABILITY)
 
-				if random.random() < PROBABILIDADE_DE_MUTACAO:
-					tools.mutShuffleIndexes(pai2, indpb=PROBABILIDADE_DE_EMBARALHAR)
+				if random.random() < MUTATION_PROBABILITY:
+					tools.mutShuffleIndexes(parent2, indpb=SHUFFLE_PROBABILITY)
 
 
 				if random.random() < 0.1:
-					pai1 = LocalSearch.two_opt(
-						pai1, distancias, max_passagens=50
+					parent1 = LocalSearch.two_opt(
+						parent1, distances, max_passes=50
 					)
 
 				if random.random() < 0.1:
-					pai2 = LocalSearch.two_opt(
-						pai2, distancias, max_passagens=50
+					parent2 = LocalSearch.two_opt(
+						parent2, distances, max_passes=50
 					)
 
-				novaPop.append(pai1)
-				if len(novaPop) < TAMANHO_DA_POPULACAO:
-					novaPop.append(pai2)
+				new_population.append(parent1)
+				if len(new_population) < POPULATION_SIZE:
+					new_population.append(parent2)
 
 
-			populacao = populacao + novaPop
-			novaPop = []
+			population = population + new_population
+			new_population = []
 
-			self.aptidao = Fitness.calculate(populacao, distancias)
+			self.fitness = Fitness.calculate(population, distances)
 			
-			indice_melhor = self.aptidao.index(min(self.aptidao))
-			novaPop.append(populacao[indice_melhor][:])
+			best_index = self.fitness.index(min(self.fitness))
+			new_population.append(population[best_index][:])
 
-			# Mantém uma parte dos melhores indivíduos distintos.
-			ordenados = sorted(
-				range(len(populacao)),
-				key=lambda i: self.aptidao[i]
+			# Keep a portion of the best distinct individuals.
+			sorted_indices = sorted(
+				range(len(population)),
+				key=lambda i: self.fitness[i]
 			)
 
-			rotas_vistas = {tuple(novaPop[0])}
+			seen_routes = {tuple(new_population[0])}
 
-			for indice in ordenados:
-				if len(novaPop) >= int(TAMANHO_DA_POPULACAO * 0.2):
+			for index in sorted_indices:
+				if len(new_population) >= int(POPULATION_SIZE * 0.2):
 					break
 
-				rota = tuple(populacao[indice])
+				route = tuple(population[index])
 
-				if rota not in rotas_vistas:
-					novaPop.append(list(rota))
-					rotas_vistas.add(rota)
+				if route not in seen_routes:
+					new_population.append(list(route))
+					seen_routes.add(route)
 
-			# Preenche o restante com descendentes da população combinada.
-			while len(novaPop) < TAMANHO_DA_POPULACAO:
-				sobrevivente = Tournament.play(populacao, self.aptidao)[:]
-				novaPop.append(sobrevivente)
+			# Fill the remaining slots with offspring from the combined population.
+			while len(new_population) < POPULATION_SIZE:
+				survivor = Tournament.play(population, self.fitness)[:]
+				new_population.append(survivor)
 
-			populacao = novaPop
-			self.aptidao = Fitness.calculate(populacao, distancias)
+			population = new_population
+			self.fitness = Fitness.calculate(population, distances)
 			
-			if min(self.aptidao) < self.melhor_custo:
-				indice_melhor = self.aptidao.index(min(self.aptidao))
+			if min(self.fitness) < self.best_cost:
+				best_index = self.fitness.index(min(self.fitness))
 
-				self.melhor_custo = self.aptidao[indice_melhor]
-				self.melhor_rota = populacao[indice_melhor][:]
+				self.best_cost = self.fitness[best_index]
+				self.best_route = population[best_index][:]
 			
-			if geracao % 20 == 0:
-				melhor = min(self.aptidao)
-				media = sum(self.aptidao) / len(self.aptidao)
-				diversidade = len({tuple(ind) for ind in populacao})
+			if generation % 20 == 0:
+				best = min(self.fitness)
+				average = sum(self.fitness) / len(self.fitness)
+				diversity = len({tuple(individual) for individual in population})
 
 				print(
-					f"Geração {geracao:4d} | "
-					f"melhor: {melhor} | "
-					f"histórico: {self.melhor_custo} | "
-					f"média: {media:.1f} | "
-					f"rotas distintas: {diversidade}/{len(populacao)}"
+					f"Generation {generation:4d} | "
+					f"best: {best} | "
+					f"historical best: {self.best_cost} | "
+					f"average: {average:.1f} | "
+					f"distinct routes: {diversity}/{len(population)}"
 				)
 				
-		return self.melhor_custo, self.melhor_rota
+		return self.best_cost, self.best_route

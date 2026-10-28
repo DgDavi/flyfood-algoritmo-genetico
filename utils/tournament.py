@@ -1,21 +1,21 @@
 import random
 
-from core.parameters import TORNEIO
+from core.parameters import TOURNAMENT_SIZE
 
 
 class Tournament:
 
     @staticmethod
-    def play(populacao, aptidoes, k=TORNEIO) :
+    def play(population, fitness_values, k=TOURNAMENT_SIZE):
 
-        if len(populacao) != len(aptidoes):
-            raise ValueError("População e aptidões devem ter o mesmo tamanho.")
+        if len(population) != len(fitness_values):
+            raise ValueError("Population and fitness values must have the same size.")
 
-        if not 1 <= k <= len(populacao):
-            raise ValueError("TORNEIO deve estar entre 1 e o tamanho da população.")
+        if not 1 <= k <= len(population):
+            raise ValueError("TOURNAMENT_SIZE must be between 1 and the population size.")
         
-        candidatos = random.sample(range(len(populacao)), k)
+        candidates = random.sample(range(len(population)), k)
 
-        melhor = min(candidatos, key=lambda idx: aptidoes[idx])
+        best = min(candidates, key=lambda idx: fitness_values[idx])
         
-        return populacao[melhor]
+        return population[best]

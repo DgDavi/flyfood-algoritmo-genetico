@@ -1,45 +1,45 @@
 
 class LocalSearch:
     @staticmethod
-    def two_opt(rota, distancias, max_passagens=100):
-        melhor_rota = rota[:]
-        n = len(melhor_rota)
+    def two_opt(route, distances, max_passes=100):
+        best_route = route[:]
+        n = len(best_route)
 
         if n < 4:
-            return melhor_rota
+            return best_route
 
-        for _ in range(max_passagens):
-            melhorou = False
+        for _ in range(max_passes):
+            improved = False
 
-            # Mantém a primeira cidade fixa.
+            # Keep the first city fixed.
             for i in range(1, n - 1):
                 for j in range(i + 1, n):
-                    a = melhor_rota[i - 1]
-                    b = melhor_rota[i]
-                    c = melhor_rota[j]
-                    d = melhor_rota[(j + 1) % n]
+                    a = best_route[i - 1]
+                    b = best_route[i]
+                    c = best_route[j]
+                    d = best_route[(j + 1) % n]
 
-                    custo_antigo = (
-                        distancias[(a, b)] +
-                        distancias[(c, d)]
+                    old_cost = (
+                        distances[(a, b)] +
+                        distances[(c, d)]
                     )
 
-                    custo_novo = (
-                        distancias[(a, c)] +
-                        distancias[(b, d)]
+                    new_cost = (
+                        distances[(a, c)] +
+                        distances[(b, d)]
                     )
 
-                    if custo_novo < custo_antigo:
-                        melhor_rota[i:j + 1] = reversed(
-                            melhor_rota[i:j + 1]
+                    if new_cost < old_cost:
+                        best_route[i:j + 1] = reversed(
+                            best_route[i:j + 1]
                         )
-                        melhorou = True
+                        improved = True
                         break
 
-                if melhorou:
+                if improved:
                     break
 
-            if not melhorou:
+            if not improved:
                 break
 
-        return melhor_rota
+        return best_route

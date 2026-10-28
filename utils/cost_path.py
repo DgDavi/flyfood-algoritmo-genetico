@@ -3,16 +3,16 @@ from sys import exit
 
 class CostPath:
     @staticmethod
-    def calculate(permutacao, dicDistancias):
-        soma = 0
-        for i in range(len(permutacao)-1):
-            a = permutacao[i]
-            b = permutacao[i+1]
-            if (a,b) in dicDistancias:
-                soma += dicDistancias[(a,b)]
+    def calculate(permutation, distances):
+        total = 0
+        for i in range(len(permutation)-1):
+            a = permutation[i]
+            b = permutation[i+1]
+            if (a,b) in distances:
+                total += distances[(a,b)]
             else:
-                print(f"Erro! ({a},{b}) não existe no dicionario!")
+                print(f"Error! ({a},{b}) does not exist in the dictionary!")
                 exit()
 
-        soma += dicDistancias[(permutacao[-1],permutacao[0])]
-        return soma
+        total += distances[(permutation[-1],permutation[0])]
+        return total

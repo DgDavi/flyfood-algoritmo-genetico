@@ -4,25 +4,25 @@ from sys import exit
 class MatrixParsing:
     @staticmethod
     def parse():
-        objArq = open("edgesbrasil58.tsp")  # noqa
+        file_object = open("edgesbrasil58.tsp")  # noqa
 
-        distancias = {}
+        distances = {}
 
         for i in range(1, 58):
-            linha = objArq.readline() 
+            line = file_object.readline()
             
-            lista = linha.split() 
+            values = line.split()
 
             for j in range(i+1, 59):
-                if len(lista) > 0:
-                    peso = int(lista.pop(0)) 
+                if len(values) > 0:
+                    weight = int(values.pop(0))
                 else:
-                    print(f"Erro! linha {i} do arquivo não possui elementos suficientes")
+                    print(f"Error! Line {i} of the file does not have enough values.")
                     exit()
 
-                distancias[(i,j)] = peso
-                distancias[(j,i)] = peso
+                distances[(i,j)] = weight
+                distances[(j,i)] = weight
 
-        objArq.close()
+        file_object.close()
 
-        return distancias
+        return distances
