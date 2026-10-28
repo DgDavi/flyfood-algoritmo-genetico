@@ -10,7 +10,6 @@ from .parameters import (
 	NUMBER_OF_CITIES,
 	NUMBER_OF_GENERATIONS,
 	POPULATION_SIZE,
-	SHUFFLE_PROBABILITY,
 )
 
 
@@ -47,20 +46,24 @@ class GeneticAlgorithm:
 				parents1 = Tournament.play(population, self.fitness)[:]
 				parents2 = Tournament.play(population, self.fitness)[:]
 
-				sons1 = []
-				sons2 = []
+				sons1 = parents1[:]
+				sons2 = parents2[:]
 				
 				if random.random() < CROSSOVER_PROBABILITY:
 					sons1, sons2 = Crossing.play(parent1=parents1, parent2=parents2)
 
 				if random.random() < MUTATION_PROBABILITY:
-					tools.mutShuffleIndexes(sons1, indpb=SHUFFLE_PROBABILITY)
+					tools.mutInversion(sons1)
 
 				if random.random() < MUTATION_PROBABILITY:
-					tools.mutShuffleIndexes(sons2, indpb=SHUFFLE_PROBABILITY)
+					tools.mutInversion(sons2)
 
 
-				if random.random() < 0.1:
+				local_search_probability = 0.5 + 0.15 * (
+					generation / NUMBER_OF_GENERATIONS	
+				)
+				
+				if random.random() < local_search_probability:
 					sons1 = LocalSearch.two_opt(
 						sons1, distances, max_passes=50
 					)
