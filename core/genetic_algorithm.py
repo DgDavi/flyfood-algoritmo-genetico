@@ -53,10 +53,10 @@ class GeneticAlgorithm:
 					sons1, sons2 = Crossing.play(parent1=parents1, parent2=parents2)
 
 				if random.random() < MUTATION_PROBABILITY:
-					tools.mutInversion(sons1)
+					sons1, = tools.mutInversion(sons1)
 
 				if random.random() < MUTATION_PROBABILITY:
-					tools.mutInversion(sons2)
+					sons2, = tools.mutInversion(sons2)
 
 
 				local_search_probability = 0.5 + 0.15 * (
