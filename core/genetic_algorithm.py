@@ -2,7 +2,7 @@ import random
 
 from deap import tools
 
-from utils import Crossing, Fitness, LocalSearch, Tournament
+from utils import Crossing, Fitness, LocalSearch, Progress, Tournament
 
 from .parameters import (
 	CROSSOVER_PROBABILITY,
@@ -15,9 +15,9 @@ from .parameters import (
 
 class GeneticAlgorithm:
 	def __init__(self) -> None:
-		self.fitness : list[int] = []
-		self.best_cost : int = 0
-		self.best_route : list[int] = []
+		self.fitness: list[int] = []
+		self.best_cost = float("inf")
+		self.best_route: list[int] | None = None
 
 	def initialize_population(self):
 		import random
@@ -32,109 +32,139 @@ class GeneticAlgorithm:
 		return population
 
 	def simulate(self, population, distances):
-		self.fitness = Fitness.calculate(population, distances)
-
-		best_index = self.fitness.index(min(self.fitness))
-
-		self.best_cost = self.fitness[best_index]
-		self.best_route = population[best_index][:]
+		self.evaluate_population(population=population, distances=distances)
+		self.update_best(population=population)
 
 		for generation in range(NUMBER_OF_GENERATIONS):
-			new_population = []
 
-			while len(new_population) < POPULATION_SIZE:
-				parents1 = Tournament.play(population, self.fitness)[:]
-				parents2 = Tournament.play(population, self.fitness)[:]
-
-				sons1 = parents1[:]
-				sons2 = parents2[:]
-				
-				if random.random() < CROSSOVER_PROBABILITY:
-					sons1, sons2 = Crossing.play(parent1=parents1, parent2=parents2)
-
-				if random.random() < MUTATION_PROBABILITY:
-					sons1, = tools.mutInversion(sons1)
-
-				if random.random() < MUTATION_PROBABILITY:
-					sons2, = tools.mutInversion(sons2)
-
-
-				local_search_probability = 0.5 + 0.15 * (
-					generation / NUMBER_OF_GENERATIONS	
-				)
-				
-				if random.random() < local_search_probability:
-					sons1 = LocalSearch.two_opt(
-						sons1, distances, max_passes=50
-					)
-
-				if random.random() < local_search_probability:
-					sons2 = LocalSearch.two_opt(
-						sons2, distances, max_passes=50
-					)
-
-				new_population.append(sons1)
-				if len(new_population) < POPULATION_SIZE:
-					new_population.append(sons2)
-
-
-			population = population + new_population
-			new_population = []
-
-			self.fitness = Fitness.calculate(population, distances)
-			
-			best_index = self.fitness.index(min(self.fitness))
-			new_population.append(population[best_index][:])
-
-			# Keep a portion of the best distinct individuals.
-			sorted_indices = sorted(
-				range(len(population)),
-				key=lambda i: self.fitness[i]
+			offspring = self.reproduce(
+				population=population,
+            	distances=distances,
+            	generation=generation
 			)
 
-			seen_routes = {tuple(new_population[0])}
+			combined_population = population + offspring
 
-			for index in sorted_indices:
-				if len(new_population) >= int(POPULATION_SIZE * 0.2):
-					break
+			combined_fitness = Fitness.calculate(
+            	combined_population, distances
+			)
 
-				route = tuple(population[index])
+			population = self.create_new_population(
+            	population=combined_population,
+            	fitness=combined_fitness
+        	)
 
-				if route not in seen_routes:
-					new_population.append(list(route))
-					seen_routes.add(route)
+			self.evaluate_population(population, distances)
+			self.update_best(population)
 
-			# Fill the remaining slots with offspring from the combined population.
-			while len(new_population) < POPULATION_SIZE:
-				survivor = Tournament.play(population, self.fitness)[:]
-				new_population.append(survivor)
-
-			population = new_population
-			self.fitness = Fitness.calculate(population, distances)
-			
-			if min(self.fitness) < self.best_cost:
-				best_index = self.fitness.index(min(self.fitness))
-				self.best_route = population[best_index][:]
-				self.best_cost = self.fitness[best_index]
-
-			self.print_progress(fitness=self.fitness, best_cost=self.best_cost, generation=generation, population=population)
+			Progress.print_progress(
+				fitness=self.fitness,
+				best_cost=self.best_cost,
+				generation=generation,
+				population=population,
+			)
 
 		return self.best_cost, self.best_route
 
-	@staticmethod
-	def print_progress(fitness, best_cost, generation, population):
-		
-		if generation % 1 == 0:
-			best = min(fitness)
-			average = sum(fitness) / len(fitness)
-			diversity = len({tuple(individual) for individual in population})
+	def evaluate_population(self, population, distances):
+		self.fitness = Fitness.calculate(population, distances)
 
-			print(
-				f"Generation {generation:4d} | "
-				f"best: {best} | "
-				f"historical best: {best_cost} | "
-				f"average: {average:.1f} | "
-				f"distinct routes: {diversity}/{len(population)}"
+	def update_best(self, population):
+		best_index = self.fitness.index(min(self.fitness))
+
+		if self.best_route is None or self.fitness[best_index] < self.best_cost:
+			self.best_cost = self.fitness[best_index]
+			self.best_route = population[best_index][:]
+
+	def reproduce(self, population, distances, generation):
+		offspring = []
+
+		local_search_probability = 0.5 + 0.15 * (generation / NUMBER_OF_GENERATIONS)
+
+		while len(offspring) < POPULATION_SIZE:
+			parent1, parent2 = self.select_parents(population)[:]
+
+			son1, son2 = self.crossover(parent1=parent1, parent2=parent2)
+
+			son1 = self.mutate(son1)
+			son2 = self.mutate(son2)
+
+			son1 = self.apply_local_search(
+            	son1, distances, local_search_probability
 			)
-			
-	
+
+			son2 = self.apply_local_search(
+				son2, distances, local_search_probability
+        	)
+
+			offspring.append(son1)
+
+			if len(offspring) < POPULATION_SIZE:
+				offspring.append(son2)
+
+		return offspring
+
+	def select_parents(self, population):
+		parent1 = Tournament.play(population, self.fitness)[:]
+		parent2 = Tournament.play(population, self.fitness)[:]
+
+		return parent1, parent2
+
+	def crossover(self, parent1, parent2):
+		son1 = parent1[:]
+		son2 = parent2[:]
+
+		if random.random() < CROSSOVER_PROBABILITY:
+			son1, son2 = Crossing.play(
+				parent1=parent1,
+            	parent2=parent2
+        	)
+
+		return son1, son2
+
+	def mutate(self, individual):
+		if random.random() < MUTATION_PROBABILITY:
+			individual, = tools.mutInversion(individual=individual)
+
+		return individual
+
+	def apply_local_search(self, individual, distances, probability):
+		if random.random() < probability:
+			individual = LocalSearch.two_opt(
+				individual, distances, max_passes=50
+			)
+
+		return individual
+
+	def create_new_population(self, population, fitness):
+		new_population = []
+
+		# Keep a portion of the best distinct individuals.
+		sorted_indices = sorted(
+			range(len(population)),
+			key=lambda i: fitness[i]
+		)
+
+		best_index = sorted_indices[0]
+		new_population.append(population[best_index][:])
+
+		seen_routes = {tuple(new_population[0])}
+
+		elite_size = int(POPULATION_SIZE * 0.2)
+
+		for index in sorted_indices:
+			if len(new_population) >= elite_size:
+				break
+
+			route = tuple(population[index])
+
+			if route not in seen_routes:
+				new_population.append(list(route))
+				seen_routes.add(route)
+
+		# Fill the remaining slots with offspring from the combined population.
+		while len(new_population) < POPULATION_SIZE:
+			survivor = Tournament.play(population, fitness)[:]
+			new_population.append(survivor)
+
+		return new_population
