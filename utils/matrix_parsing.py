@@ -2,9 +2,10 @@ from pathlib import Path
 
 from core.parameters import NUMBER_OF_CITIES
 
+
 class MatrixParsing:
     @staticmethod
-    def parse(file_path="brazil58.tsp"):
+    def parse(file_path="flyfood.tsp"):
         path = Path(__file__).resolve().parent.parent / file_path
         content = path.read_text(encoding="utf-8")
         marker = "EDGE_WEIGHT_SECTION"
