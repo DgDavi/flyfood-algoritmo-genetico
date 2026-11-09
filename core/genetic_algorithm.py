@@ -79,7 +79,7 @@ class GeneticAlgorithm:
 	def reproduce(self, population, distances, generation):
 		offspring = []
 
-		local_search_probability = 0.5 + 0.15 * (generation / NUMBER_OF_GENERATIONS)
+		local_search_probability = 0.002 * (generation / NUMBER_OF_GENERATIONS)
 
 		while len(offspring) < POPULATION_SIZE:
 			parent1, parent2 = self.select_parents(population)[:]

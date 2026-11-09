@@ -6,8 +6,8 @@ from core.parameters import NUMBER_OF_CITIES
 class MatrixParsing:
     @staticmethod
     def parse():
-        # file_object = open("edgesbrasil58.tsp")  # noqa
-        file_object = open("flyfood.tsp")  # noqa
+        file_object = open("edgesbrasil58.tsp")  # noqa
+        # file_object = open("flyfood.tsp")  # noqa
 
         distances = {}
 
