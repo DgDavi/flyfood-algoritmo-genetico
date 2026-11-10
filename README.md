@@ -13,7 +13,7 @@ Resolver o TSP para as cidades representadas no arquivo `edgesbrasil58.tsp`, bus
 ```text
 .
 ├── README.md
-├── lerBrasil58.py
+├── main.py
 ├── brazil58.tsp
 ├── edgesbrasil58.tsp
 ├── flyfood.tsp
