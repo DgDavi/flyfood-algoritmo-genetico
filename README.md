@@ -1,375 +1,165 @@
-# Explicação do `genetic_algorithm.py`
+# Flyfood / TSP Brasil 58
 
-O arquivo [`core/genetic_algorithm.py`](./core/genetic_algorithm.py) implementa o **algoritmo genético** usado para tentar encontrar uma rota de menor custo no problema do caixeiro-viajante, conhecido como **TSP** (*Travelling Salesman Problem*).
+Este repositório implementa uma solução para o problema do caixeiro-viajante (TSP) usando um algoritmo genético híbrido para encontrar uma rota com menor custo para 58 cidades brasileiras.
 
-Neste projeto, o objetivo é encontrar uma rota que visite as 58 cidades do Brasil exatamente uma vez e retorne à cidade inicial, minimizando a distância total percorrida.
+O projeto foi estruturado em módulos para separar a lógica de otimização, avaliação da rota, seleção, cruzamento, mutação e busca local.
 
-## Função principal no projeto
+## Objetivo
 
-A classe `GeneticAlgorithm` coordena todo o processo de busca:
+Resolver o TSP para as cidades representadas no arquivo `edgesbrasil58.tsp`, buscando uma permutação de cidades que minimize a distância total percorrida, respeitando a condição de visitar cada cidade exatamente uma vez e retornar à origem.
 
-1. Criação da população inicial.
-2. Avaliação das rotas.
-3. Seleção dos melhores indivíduos.
-4. Cruzamento entre rotas.
-5. Mutação.
-6. Aplicação de busca local.
-7. Preservação das melhores soluções.
-8. Repetição por várias gerações.
-9. Retorno da melhor rota encontrada.
-
-Ela funciona como o núcleo do projeto. Os outros módulos fornecem operações específicas, enquanto esse arquivo organiza a execução do algoritmo.
-
-## 1. Inicialização da classe
-
-```python
-def __init__(self) -> None:
-    self.fitness: list[int] = []
-    self.best_cost: int = 0
-    self.best_route: list[int] = []
-```
-
-Esses atributos armazenam o estado do algoritmo:
-
-- `fitness`: custos associados às rotas da população atual.
-- `best_cost`: menor distância encontrada até o momento.
-- `best_route`: rota correspondente ao menor custo encontrado.
-
-O valor de `best_cost` é atualizado logo após a avaliação da população inicial.
-
-## 2. Criação da população inicial
-
-```python
-def initialize_population(self):
-```
-
-Esse método cria a primeira população de soluções.
-
-Para cada indivíduo:
-
-```python
-individual = list(range(1, NUMBER_OF_CITIES + 1))
-random.shuffle(individual)
-```
-
-É criada uma lista contendo as cidades de `1` a `58`. Depois, essa lista é embaralhada aleatoriamente.
-
-Um indivíduo representa uma possível rota, por exemplo:
+## Estrutura do projeto
 
 ```text
-[12, 4, 33, 1, 58, 20, ...]
+.
+├── README.md
+├── lerBrasil58.py
+├── brazil58.tsp
+├── edgesbrasil58.tsp
+├── flyfood.tsp
+├── requirements.txt
+├── core/
+│   ├── __init__.py
+│   ├── genetic_algorithm.py
+│   └── parameters.py
+└── utils/
+    ├── __init__.py
+    ├── cost_path.py
+    ├── crossing.py
+    ├── fitness.py
+    ├── matrix_parsing.py
+    ├── progress.py
+    ├── tournament.py
+    └── two_opt.py
 ```
 
-Cada rota contém todas as 58 cidades em uma ordem diferente.
+## Componentes principais
 
-A quantidade de indivíduos é definida por:
+### `lerBrasil58.py`
+Script principal que executa o algoritmo. Ele:
+
+1. carrega a matriz de distâncias,
+2. inicializa a população,
+3. executa as gerações do algoritmo genético,
+4. imprime a melhor rota e o menor custo encontrado,
+5. exibe o tempo total de execução.
+
+### `core/parameters.py`
+Contém as configurações do problema e do algoritmo, como:
+
+- `NUMBER_OF_CITIES = 58`
+- `POPULATION_SIZE = 200`
+- `NUMBER_OF_GENERATIONS = 80`
+- `MUTATION_PROBABILITY = 0.2`
+- `CROSSOVER_PROBABILITY = 1.0`
+- `TOURNAMENT_SIZE = 3`
+
+### `core/genetic_algorithm.py`
+Classe central do projeto. Ela coordena:
+
+- criação da população inicial,
+- avaliação de cada rota,
+- seleção de pais por torneio,
+- cruzamento ordenado,
+- mutação por inversão,
+- busca local com `2-opt`,
+- preservação das melhores rotas,
+- execução ao longo de várias gerações.
+
+### `utils/matrix_parsing.py`
+Lê o arquivo de distâncias e monta um dicionário em formato `(i, j) -> peso`, permitindo acesso bidirecional entre cidades.
+
+O projeto usa `edgesbrasil58.tsp` por padrão:
 
 ```python
-POPULATION_SIZE = 200
+file_object = open("edgesbrasil58.tsp")
 ```
 
-Portanto, a população inicial possui 200 rotas aleatórias.
+Há também os arquivos alternativos `brazil58.tsp` e `flyfood.tsp`, que podem ser utilizados ao ajustar o ponto de leitura do arquivo.
 
-## 3. Avaliação da população
+## Como o algoritmo funciona
 
-O método principal é:
+O fluxo principal é:
 
-```python
-def simulate(self, population, distances):
+1. gerar uma população inicial com rotas aleatórias;
+2. calcular o custo de cada rota;
+3. selecionar os melhores indivíduos para reprodução;
+4. gerar novos filhos por cruzamento;
+5. aplicar mutação e busca local;
+6. manter somente as melhores rotas na população;
+7. repetir até atingir o número de gerações configurado.
+
+### Seleção
+A seleção é feita por torneio (`Tournament.play`), que escolhe alguns indivíduos aleatoriamente e retorna o melhor custo entre eles.
+
+### Cruzamento
+O cruzamento usa `tools.cxOrdered` da biblioteca DEAP para gerar filhos válidos sem repetir cidades.
+
+### Mutação
+A mutação é implementada por `tools.mutInversion`, invertendo um trecho da rota para introduzir diversidade.
+
+### Busca local
+A busca local `2-opt` tenta melhorar a rota invertendo segmentos em busca de redução na distância total.
+
+## Dependências
+
+O projeto usa as bibliotecas abaixo, listadas em `requirements.txt`:
+
+- `deap==1.4.4`
+- `numpy==2.5.4`
+- `more-itertools==0.3.2`
+- `platformdirs==4.13.7`
+- `pyparsing==3.12`
+
+Observação: o arquivo `requirements.txt` parece estar salvo em codificação UTF-16. Em alguns ambientes, isso pode causar erro ao instalar com `pip`. Se necessário, converta antes:
+
+```bash
+iconv -f utf-16 -t utf-8 requirements.txt > requirements_utf8.txt
+python -m pip install -r requirements_utf8.txt
 ```
 
-Ele recebe:
+## Como executar
 
-- `population`: conjunto de rotas.
-- `distances`: dicionário contendo as distâncias entre as cidades.
+Crie um ambiente virtual e instale as dependências:
 
-A avaliação é feita por:
-
-```python
-self.fitness = Fitness.calculate(population, distances)
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install deap==1.4.4 numpy==2.5.4
 ```
 
-Para cada rota, o projeto calcula o custo total do percurso. Uma rota é considerada melhor quando possui um valor menor de `fitness`.
+Se preferir, use o arquivo de dependências convertido:
 
-Por exemplo, se os custos forem:
-
-```text
-[12500, 10300, 11800, 9800]
+```bash
+iconv -f utf-16 -t utf-8 requirements.txt > requirements_utf8.txt
+python -m pip install -r requirements_utf8.txt
 ```
 
-A melhor rota é a de custo `9800`.
+Em seguida, execute:
 
-Inicialmente, o algoritmo encontra a melhor rota da população inicial:
-
-```python
-best_index = self.fitness.index(min(self.fitness))
-self.best_cost = self.fitness[best_index]
-self.best_route = population[best_index][:]
+```bash
+python lerBrasil58.py
 ```
 
-## 4. Execução das gerações
+A saída esperada inclui:
 
-O algoritmo executa várias gerações:
+- melhor custo encontrado;
+- melhor rota encontrada;
+- tempo total de execução.
 
-```python
-for generation in range(NUMBER_OF_GENERATIONS):
-```
+## Dicas
 
-No projeto:
+- Para trocar o conjunto de cidades, ajuste o nome do arquivo lido em `utils/matrix_parsing.py`.
+- Para alterar o comportamento do algoritmo, edite os parâmetros em `core/parameters.py`.
+- O código é adequado para experimentação e tuning de parâmetros do algoritmo genético.
 
-```python
-NUMBER_OF_GENERATIONS = 20
-```
+## Observações
 
-Cada geração tenta produzir uma população melhor que a anterior.
+Este projeto é um exemplo de combinação entre:
 
-## 5. Seleção dos pais
+- algoritmo genético para exploração global,
+- heurística `2-opt` para refinamento local,
+- estrutura modular em Python para facilitar manutenção e testes.
 
-Dentro de cada geração, duas rotas são escolhidas usando torneio:
-
-```python
-parents1 = Tournament.play(population, self.fitness)[:]
-parents2 = Tournament.play(population, self.fitness)[:]
-```
-
-O método `Tournament.play` escolhe alguns indivíduos aleatoriamente e retorna o melhor deles.
-
-Isso favorece rotas com menor custo, mas ainda mantém certa aleatoriedade para evitar que o algoritmo fique preso muito rapidamente em uma solução ruim.
-
-O tamanho do torneio é definido por:
-
-```python
-TOURNAMENT_SIZE = 3
-```
-
-## 6. Cruzamento
-
-Depois da seleção, os dois pais podem ser combinados:
-
-```python
-if random.random() < CROSSOVER_PROBABILITY:
-    sons1, sons2 = Crossing.play(
-        parent1=parents1,
-        parent2=parents2
-    )
-```
-
-A probabilidade de cruzamento está definida como:
-
-```python
-CROSSOVER_PROBABILITY = 1.0
-```
-
-Isso significa que o cruzamento ocorre sempre.
-
-O cruzamento combina partes das duas rotas para gerar dois descendentes. Como uma rota do TSP não pode repetir cidades, o projeto utiliza o cruzamento ordenado da biblioteca `DEAP`.
-
-Exemplo conceitual:
-
-```text
-Pai 1: [1, 2, 3, 4, 5]
-Pai 2: [5, 4, 3, 2, 1]
-
-Filho: [1, 4, 3, 2, 5]
-```
-
-O resultado precisa continuar sendo uma permutação válida das cidades.
-
-## 7. Mutação
-
-Cada descendente pode sofrer mutação:
-
-```python
-if random.random() < MUTATION_PROBABILITY:
-    tools.mutInversion(sons1)
-```
-
-A mutação aplicada é a **inversão**: um trecho da rota é escolhido e seus
-elementos são invertidos. Como a operação apenas altera a ordem das cidades,
-o resultado continua sendo uma permutação válida.
-
-As configurações são:
-
-```python
-MUTATION_PROBABILITY = 0.2
-```
-
-Cada descendente tem 20% de chance de sofrer uma inversão. A mutação adiciona
-diversidade à população e ajuda o algoritmo a explorar novas possibilidades.
-
-## 8. Busca local com `2-opt`
-
-Depois do cruzamento e da mutação, existe uma probabilidade progressiva de
-aplicar uma melhoria local:
-
-```python
-local_search_probability = 0.5 + 0.15 * (
-    generation / NUMBER_OF_GENERATIONS
-)
-
-if random.random() < local_search_probability:
-    sons1 = LocalSearch.two_opt(
-        sons1,
-        distances,
-        max_passes=50
-    )
-```
-
-A mesma verificação é feita para `sons2`. A probabilidade começa em 50% e
-aumenta conforme as gerações avançam. Com os parâmetros atuais, ela varia de
-50% na primeira geração até aproximadamente 64,25% na última.
-
-O algoritmo `2-opt` tenta melhorar uma rota invertendo trechos dela. Ele compara:
-
-- O custo das conexões atuais.
-- O custo depois de inverter uma parte da rota.
-
-Se a inversão reduzir a distância total, ela é mantida.
-
-Essa combinação entre algoritmo genético e busca local é conhecida como uma abordagem híbrida ou **algoritmo memético**. O algoritmo genético explora soluções novas, enquanto o `2-opt` melhora localmente as soluções encontradas.
-
-## 9. Construção da nova população
-
-Os descendentes são adicionados à nova população:
-
-```python
-new_population.append(sons1)
-
-if len(new_population) < POPULATION_SIZE:
-    new_population.append(sons2)
-```
-
-Esse processo continua até a nova população atingir 200 indivíduos.
-
-Depois, a população antiga e os descendentes são combinados:
-
-```python
-population = population + new_population
-```
-
-Nesse momento, a população temporária possui indivíduos antigos e novos.
-
-## 10. Elitismo e diversidade
-
-O algoritmo calcula novamente o custo de todas as rotas combinadas:
-
-```python
-self.fitness = Fitness.calculate(population, distances)
-```
-
-A melhor rota é preservada diretamente:
-
-```python
-best_index = self.fitness.index(min(self.fitness))
-new_population.append(population[best_index][:])
-```
-
-Isso é chamado de **elitismo**. A melhor solução não é perdida durante a reprodução.
-
-Depois, o algoritmo ordena as rotas pelo custo:
-
-```python
-sorted_indices = sorted(
-    range(len(population)),
-    key=lambda i: self.fitness[i]
-)
-```
-
-Ele mantém uma parte das melhores rotas distintas:
-
-```python
-if len(new_population) >= int(POPULATION_SIZE * 0.2):
-    break
-```
-
-Como `POPULATION_SIZE` é 200, 40 indivíduos (20% da população) são
-reservados para a melhor rota e para as melhores rotas distintas.
-
-Essa estratégia evita que a população fique composta apenas por cópias da mesma rota.
-
-## 11. Preenchimento da população
-
-Depois de preservar os melhores indivíduos, o restante da população é preenchido usando novamente seleção por torneio:
-
-```python
-while len(new_population) < POPULATION_SIZE:
-    survivor = Tournament.play(
-        population,
-        self.fitness
-    )[:]
-
-    new_population.append(survivor)
-```
-
-Assim, as rotas mais promissoras têm maior chance de continuar existindo na próxima geração.
-
-## 12. Atualização da melhor solução histórica
-
-Após formar a nova população, o algoritmo verifica se surgiu uma rota melhor:
-
-```python
-if min(self.fitness) < self.best_cost:
-    best_index = self.fitness.index(min(self.fitness))
-
-    self.best_cost = self.fitness[best_index]
-    self.best_route = population[best_index][:]
-```
-
-Se o menor custo da geração atual for menor que o melhor custo histórico, a rota é armazenada.
-
-Essa variável histórica é importante porque uma geração posterior pode ter uma população pior que uma geração anterior. Nesse caso, o algoritmo ainda conserva a melhor solução já encontrada.
-
-## 13. Exibição do progresso
-
-A cada geração, o algoritmo imprime informações:
-
-```python
-if generation % 1 == 0:
-```
-
-Ele exibe:
-
-- Número da geração.
-- Melhor custo da geração.
-- Melhor custo histórico.
-- Custo médio da população.
-- Quantidade de rotas distintas.
-
-Exemplo:
-
-```text
-Generation   19 | best: 9500 | historical best: 9300 |
-average: 11200.4 | distinct routes: 174/200
-```
-
-Isso permite acompanhar a evolução da solução e medir a diversidade da população.
-
-## 14. Resultado final
-
-Ao terminar as 20 gerações configuradas, o método retorna:
-
-```python
-return self.best_cost, self.best_route
-```
-
-Ou seja:
-
-```text
-melhor custo encontrado
-melhor rota encontrada
-```
-
-Esses valores são utilizados pelo arquivo [`lerBrasil58.py`](./lerBrasil58.py), que apresenta o resultado ao usuário.
-
-## Resumo
-
-O arquivo [`core/genetic_algorithm.py`](./core/genetic_algorithm.py) é o controlador do processo de otimização. Ele não calcula diretamente todas as distâncias nem implementa sozinho cada operação genética. Em vez disso, coordena os módulos:
-
-- `Fitness`: calcula o custo de cada rota.
-- `Tournament`: seleciona os pais e sobreviventes.
-- `Crossing`: realiza o cruzamento.
-- `DEAP`: executa a mutação.
-- `LocalSearch`: aplica a melhoria `2-opt`.
-- `parameters.py`: fornece os parâmetros do algoritmo.
-
-A função dele no projeto é transformar uma população inicial de rotas aleatórias em soluções progressivamente melhores para o TSP Brasil 58.
+Ele é útil como base para estudos de otimização combinatória, TSP e metaheurísticas.
