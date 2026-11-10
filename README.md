@@ -139,7 +139,7 @@ python -m pip install -r requirements_utf8.txt
 Em seguida, execute:
 
 ```bash
-python lerBrasil58.py
+python main.py
 ```
 
 A saída esperada inclui:
