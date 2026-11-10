@@ -35,7 +35,7 @@ Resolver o TSP para as cidades representadas no arquivo `edgesbrasil58.tsp`, bus
 
 ## Componentes principais
 
-### `lerBrasil58.py`
+### `main.py`
 Script principal que executa o algoritmo. Ele:
 
 1. carrega a matriz de distâncias,
